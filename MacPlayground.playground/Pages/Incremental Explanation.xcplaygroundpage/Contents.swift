@@ -1,6 +1,51 @@
 import Incremental_Mac
 
-var arr: ArrayWithHistory<Int> = ArrayWithHistory([1,2,3] as [Int])
+struct ArrayWithChanges<A: Equatable>: Equatable, CustomDebugStringConvertible, ExpressibleByArrayLiteral {
+  typealias ArrayLiteralElement = A
+
+  let initial: [A]
+  var changes: [ArrayChange<A>]
+  var latest: [A]
+
+  init(arrayLiteral elements: A...) {
+    self.init(elements)
+  }
+
+  init(_ value: [A] = []) {
+    initial = value
+    changes = []
+    latest = value
+  }
+
+  static func == (lhs: ArrayWithChanges<A>, rhs: ArrayWithChanges<A>) -> Bool {
+    return lhs.latest == rhs.latest
+  }
+
+  mutating func append(value: A) {
+    change(.insert(value, at: latest.count))
+  }
+
+  mutating func change(_ change: ArrayChange<A>) {
+    changes.append(change)
+    latest.apply(change)
+  }
+
+  public var debugDescription: String {
+    return "ArrayWithChanges(\(latest))"
+  }
+}
+
+struct State: Equatable {
+  let arr: ArrayWithChanges<Int>
+
+  static func == (lhs: State, rhs: State) -> Bool {
+    return lhs.arr == rhs.arr
+  }
+}
+
+var state = Input<State>(State(arr: [1, 2, 3]))
+
+var arr: ArrayWithHistory<Int> = ArrayWithHistory(state.i.value.arr.latest)
 let condition = Input<(Int) -> Bool>(alwaysPropagate: { $0 % 2 == 0 })
 let result: ArrayWithHistory<Int> = arr.filter(condition.i)
 let disposable2 = result.latest.observe {
