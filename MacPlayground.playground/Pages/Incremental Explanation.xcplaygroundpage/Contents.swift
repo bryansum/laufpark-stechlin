@@ -45,9 +45,6 @@ struct State: Equatable {
 
 var state = Input<State>(State(arr: [1, 2, 3]))
 
-//var arr: ArrayWithHistory<Int> = ArrayWithHistory(state.i.value.arr.latest)
-//let condition = Input<(Int) -> Bool>(alwaysPropagate: { $0 % 2 == 0 })
-//let result: ArrayWithHistory<Int> = arr.filter(condition.i)
 let d = state.i.observe {
     print("state: \($0)")
 }
@@ -57,11 +54,3 @@ let d2 = state[\.arr].observe {
 
 state.change { $0.arr.change(.insert(4, at: 3)) }
 state.change { $0.arr.change(.insert(5, at: 4)) }
-
-//state.change { $0.arr.change(.insert(4, at: 3)) }
-//arr.change(.insert(6, at: 3))
-//arr.change(.insert(5, at: 3))
-////condition.write { $0 > 3 }
-////condition.write { $0 > 0 }
-//arr.change(.remove(at: 4))
-//
