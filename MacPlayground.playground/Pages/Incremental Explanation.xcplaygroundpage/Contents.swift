@@ -25,6 +25,14 @@ struct ArrayWithChanges<A: Equatable>: Equatable, CustomDebugStringConvertible, 
     change(.insert(value, at: latest.count))
   }
 
+  mutating func mutate(at index: Int, transform: (inout A) -> ()) {
+    var value = latest[index]
+    transform(&value)
+    if latest[index] != value {
+      change(.replace(with: value, at: index))
+    }
+  }
+
   mutating func change(_ change: ArrayChange<A>) {
     changes.append(change)
     latest.apply(change)
