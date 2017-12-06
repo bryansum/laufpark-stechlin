@@ -23,6 +23,13 @@ public func navigationController(_ viewControllers: ArrayWithHistory<IBox<UIView
     return result
 }
 
+public func navigationController(_ viewControllers: I<ArrayWithChanges<IBox<UIViewController>>>) -> IBox<UINavigationController> {
+    let nc = UINavigationController()
+    let result = IBox(nc)
+    result.bindViewControllers(to: viewControllers)
+    return result
+}
+
 extension IBox where V: UINavigationController {
     func appendViewController(_ vc: IBox<UIViewController>) {
         self.unbox.viewControllers.append(vc.unbox)
@@ -31,6 +38,48 @@ extension IBox where V: UINavigationController {
     
     public func bindViewControllers(to value: ArrayWithHistory<IBox<UIViewController>>) {
         self.disposables.append(value.observe(current: { initialVCs in
+            assert(self.unbox.viewControllers == [])
+            for v in initialVCs {
+                self.appendViewController(v)
+            }
+        }) { [unowned self] in
+            switch $0 {
+            case let .insert(v, at: i):
+                if i == self.unbox.viewControllers.count {
+                    self.unbox.pushViewController(v.unbox, animated: true)
+                } else {
+                    self.unbox.viewControllers.insert(v.unbox, at: i)
+                }
+                self.disposables.append(v)
+            case .remove(at: let i):
+                let v: UIViewController = self.unbox.viewControllers[i]
+                let index = self.disposables.index { d in
+                    if let vcBox = d as? IBox<UIViewController>, vcBox.unbox === v {
+                        return true
+                    }
+                    return false
+                }
+                self.disposables.remove(at: index!)
+                self.unbox.viewControllers.remove(at: i)
+            case .replace(let with, let i):
+                let v: UIViewController = self.unbox.viewControllers[i]
+                let index = self.disposables.index { d in
+                    if let vcBox = d as? IBox<UIViewController>, vcBox.unbox === v {
+                        return true
+                    }
+                    return false
+                }
+                self.disposables.remove(at: index!)
+                self.unbox.viewControllers[i] = with.unbox
+                self.disposables.append(with)
+            case let .move(at: from, to: to):
+                self.unbox.viewControllers.swapAt(from, to)
+            }
+        })
+    }
+
+    public func bindViewControllers(to value: I<ArrayWithChanges<IBox<UIViewController>>>) {
+        disposables.append(value.observe(current: { initialVCs in
             assert(self.unbox.viewControllers == [])
             for v in initialVCs {
                 self.appendViewController(v)
