@@ -35,22 +35,20 @@ struct ArrayWithChanges<A: Equatable>: Equatable, CustomDebugStringConvertible, 
   }
 }
 
-struct State: Equatable {
-  var arr: ArrayWithChanges<Int>
+let clips = ArrayWithHistory([1, 2, 3])
 
+struct State: Equatable {
   static func == (lhs: State, rhs: State) -> Bool {
-    return lhs.arr == rhs.arr
+    return true
   }
 }
 
-var state = Input<State>(State(arr: [1, 2, 3]))
+var state = Input<State>(State())
 
-let d = state.i.observe {
-    print("state: \($0)")
-}
-let d2 = state[\.arr].observe {
-  print("array: \($0)")
-}
+let d3 = clips.observe(current: { current in
+  print("current: \(current)")
+}, handleChange: { change in
+  print("change: \(change)")
+})
 
-state.change { $0.arr.change(.insert(4, at: 3)) }
-state.change { $0.arr.change(.insert(5, at: 4)) }
+clips.change(.insert(4, at: 3))
