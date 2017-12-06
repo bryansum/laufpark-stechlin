@@ -119,7 +119,7 @@ func conversionView(state: I<State>, send: @escaping (State.Message) -> ()) -> I
         outputLabel.cast,
     ])
     return viewController(rootView: sv,
-                          constraints: [equalTop(), equalLeading(), equalTrailing()])
+                          constraints: sizeToParent())
 }
 
 func view(state: I<State>, send: @escaping (State.Message) -> ()) -> IBox<UIViewController> {
@@ -130,7 +130,7 @@ func view(state: I<State>, send: @escaping (State.Message) -> ()) -> IBox<UIView
         cell.textLabel?.text = currency
     }.map { $0 as UIViewController }
     let loading = activityIndicator(style: I(constant: .gray), animating: I(constant: true))
-    let empty = viewController(rootView: loading, constraints: [equalCenterX(), equalCenterY()])
+    let empty = viewController(rootView: loading, constraints: [equal(\.centerXAnchor), equal(\.centerXAnchor)])
     let rootView = if_(currencies.map { $0.isEmpty}, then: empty, else: table)
     let vcs = flatten([rootView])
     let nc = navigationController(vcs)
