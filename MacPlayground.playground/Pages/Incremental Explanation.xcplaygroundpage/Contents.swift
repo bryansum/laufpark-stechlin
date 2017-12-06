@@ -35,6 +35,19 @@ struct ArrayWithChanges<A: Equatable>: Equatable, CustomDebugStringConvertible, 
   }
 }
 
+extension I {
+  func observe<B>(current: ([B]) -> (), handleChange: @escaping (ArrayChange<B>) -> ()) -> Disposable where A == ArrayWithChanges<B> {
+    current(value.latest)
+    var changes = value.changes
+    return observe { arr in
+      for change in arr.changes[changes.count...] {
+        handleChange(change)
+      }
+      changes = arr.changes
+    }
+  }
+}
+
 struct State: Equatable {
   var arr: ArrayWithChanges<Int>
 
@@ -48,9 +61,13 @@ var state = Input<State>(State(arr: [1, 2, 3]))
 let d = state.i.observe {
     print("state: \($0)")
 }
-let d2 = state[\.arr].observe {
-  print("array: \($0)")
+let arr = state[\.arr]
+let d2 = arr.observe(current: { current in
+  print("current: \(current)")
+}) { change in
+  print("change: \(change)")
 }
 
 state.change { $0.arr.change(.insert(4, at: 3)) }
 state.change { $0.arr.change(.insert(5, at: 4)) }
+
