@@ -98,6 +98,7 @@ extension IList {
     public static func ==(l: IList<A>, r: IList<A>) -> Bool {
         switch (l, r) {
         case (.empty, .empty): return true
+        case (.cons(_, let lTail), .cons(_, let rTail)): return lTail.value == rTail.value
         default: return false
         }
     }
@@ -215,7 +216,7 @@ extension Array where Element: Equatable {
     }
 }
 
-public final class ArrayWithHistory<A: Equatable>: Equatable {
+public struct ArrayWithHistory<A: Equatable>: Equatable {
     public let initial: [A]
     public let changes: I<IList<ArrayChange<A>>> // todo: this should be write-only
     public init(_ initial: [A]) {
@@ -228,20 +229,27 @@ public final class ArrayWithHistory<A: Equatable>: Equatable {
     }
 
     public static func ==(lhs: ArrayWithHistory<A>, rhs: ArrayWithHistory<A>) -> Bool {
-        return lhs === rhs
+        return lhs.initial == rhs.initial
+            && lhs.changes.value == rhs.changes.value
+    }
+}
+
+extension ArrayWithHistory: ExpressibleByArrayLiteral {
+    public init(arrayLiteral elements: A...) {
+        self.init(elements)
     }
 }
 
 extension ArrayWithHistory { // mutation. we could either track this with a phantom type, or only allow changes on creation... not sure yet.
     
-    public func change(_ change: ArrayChange<A>) {
+    public mutating func change(_ change: ArrayChange<A>) {
         appendOnly(change, to: changes)
     }
     
     // todo not so sure if this is a great idea! we should only expose append/change when creating an array anyway.
-    public func append(_ value: A) {
-        let index = self.unsafeLatestSnapshot.count
-        self.change(.insert(value, at: index))
+    public mutating func append(_ value: A) {
+        let index = unsafeLatestSnapshot.count
+        change(.insert(value, at: index))
     }
     
     // todo I'm not sure if this is a good idea either... should only be used when mutating.
@@ -250,20 +258,20 @@ extension ArrayWithHistory { // mutation. we could either track this with a phan
     }
     
     // todo not sure if this is the best idea
-    public func remove(where condition: (A) -> Bool) {
-        let reversed = self.unsafeLatestSnapshot.enumerated().reversed()
+    public mutating func remove(where condition: (A) -> Bool) {
+        let reversed = unsafeLatestSnapshot.enumerated().reversed()
         for (index, item) in reversed {
             if condition(item) {
-                self.change(.remove(at: index))
+                change(.remove(at: index))
             }
         }
     }
     
-    public func mutate(at index: Int, transform: (inout A) -> ()) {
+    public mutating func mutate(at index: Int, transform: (inout A) -> ()) {
         var value = unsafeLatestSnapshot[index]
         transform(&value)
         if unsafeLatestSnapshot[index] != value {
-            self.change(.replace(with: value, at: index))
+            change(.replace(with: value, at: index))
         }
     }
 }
