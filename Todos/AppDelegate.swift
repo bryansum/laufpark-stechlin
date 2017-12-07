@@ -28,7 +28,8 @@ func <(lhs: Todo, rhs: Todo) -> Bool {
 }
 
 struct State: RootComponent {
-    let todos: ArrayWithHistory<Todo> = ArrayWithHistory<Todo>([])
+    var todos: ArrayWithHistory<Todo> = ArrayWithHistory<Todo>([])
+    var todoCount = Input<Int>(0)
     
     enum Message {
         case newTodo
@@ -50,6 +51,7 @@ struct State: RootComponent {
         case .add(let text):
             if let t = text {
                 todos.append(Todo(title: t, done: false))
+                todoCount.write(todos.latest.value.count)
             }
         }
         return []
@@ -67,7 +69,10 @@ func emptyVC(text: String) -> IBox<UIViewController> {
 
 }
 
+var disposables: [Any] = []
+
 func render(state: I<State>, send: @escaping (State.Message) -> ()) -> IBox<UIViewController> {
+
     let items = state[\.todos].map { $0.sort(by: I(constant: <)) }
     let tableVC: IBox<UIViewController> = tableViewController(items: items, didSelect: { send(.select($0)) }, didDelete: { send(.delete($0)) }, configure: { cell, todo in
         cell.textLabel?.text = todo.title
@@ -83,6 +88,18 @@ func render(state: I<State>, send: @escaping (State.Message) -> ()) -> IBox<UIVi
     let vc = if_(state[\.todos].flatMap { $0.isEmpty }, then: e, else: tableVC)
     
     let navigationVC = navigationController(flatten([vc]))
+
+    let i = state.value.todos.latest.flatMap { todos in
+        return state.value.todoCount.i
+    }
+    disposables.append(i.observe { value in
+        print("todoCount flatMapped: \(value)")
+    })
+//    navigationVC.disposables.append(state.value.todos.observe(current: { (current) in
+//        print("current: \(current)")
+//    }) { (change) in
+//        print("change: \(change)")
+//    })
     return navigationVC.map { $0 }
 }
 
