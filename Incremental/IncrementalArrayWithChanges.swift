@@ -29,8 +29,26 @@ public struct ArrayWithChanges<A: Equatable>: Equatable, CustomDebugStringConver
         return lhs.latest == rhs.latest
     }
 
-    public mutating func append(value: A) {
+    public var isEmpty: Bool {
+        return latest.isEmpty
+    }
+
+    public func index(of: A) -> Int? {
+        return latest.index(of: of)
+    }
+
+    public mutating func append(_ value: A) {
         change(.insert(value, at: latest.count))
+    }
+
+    public mutating func remove(where condition: (A) -> Bool) {
+        let reversed = latest.enumerated().reversed()
+        for (index, item) in reversed {
+            if condition(item) {
+                change(.remove(at: index))
+            }
+            latest.remove(at: index)
+        }
     }
 
     public mutating func mutate(at index: Int, transform: (inout A) -> ()) {
