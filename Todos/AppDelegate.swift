@@ -28,7 +28,7 @@ func <(lhs: Todo, rhs: Todo) -> Bool {
 }
 
 struct State: RootComponent {
-    let todos: ArrayWithHistory<Todo> = ArrayWithHistory<Todo>([])
+    var todos: ArrayWithChanges<Todo> = []
     
     enum Message {
         case newTodo
@@ -68,7 +68,7 @@ func emptyVC(text: String) -> IBox<UIViewController> {
 }
 
 func render(state: I<State>, send: @escaping (State.Message) -> ()) -> IBox<UIViewController> {
-    let items = state[\.todos].map { $0.sort(by: I(constant: <)) }
+    let items = state[\.todos]
     let tableVC: IBox<UIViewController> = tableViewController(items: items, didSelect: { send(.select($0)) }, didDelete: { send(.delete($0)) }, configure: { cell, todo in
         cell.textLabel?.text = todo.title
         cell.accessoryType = todo.done ? .checkmark : .none
@@ -79,8 +79,8 @@ func render(state: I<State>, send: @escaping (State.Message) -> ()) -> IBox<UIVi
     
     let e = emptyVC(text: "No todos yet.")
     e.setRightBarButtonItems([add()])
-    
-    let vc = if_(state[\.todos].flatMap { $0.isEmpty }, then: e, else: tableVC)
+
+    let vc = if_(state[\.todos].map { $0.isEmpty }, then: e, else: tableVC)
     
     let navigationVC = navigationController(flatten([vc]))
     return navigationVC.map { $0 }
