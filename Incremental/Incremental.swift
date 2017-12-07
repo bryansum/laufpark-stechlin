@@ -24,16 +24,19 @@ final class Queue {
     }
     
     func process() {
+        print("_process")
         guard !processing else { return }
         processing = true
         while let (edge, _) = edges.popLast() {
+            print("_edges")
             guard !processed.contains(where: { $0 === edge }) else {
+                print("_edgesContains")
                 continue
             }
             processed.append(edge)
             edge.fire()
         }
-        
+        print("_alreadyFired")
         // cleanup
         for i in fired {
             i.firedAlready = false
@@ -61,6 +64,7 @@ final class Observer: Edge {
     }
     let height = Height.minusOne
     func fire() {
+        print("_observerFire")
         observer()
     }
 }
@@ -106,6 +110,7 @@ final class MapReader: Reader {
         return target.height.incremented()
     }
     func fire() {
+        print("_mapReaderFire")
         if invalidated {
             return // todo dry
         }
@@ -217,6 +222,7 @@ public final class I<A>: AnyI, Node {
     
     public func observe(_ observer: @escaping (A) -> ()) -> Disposable {
         let token = observers.add(Observer {
+            print("_observerFire2")
             observer(self.value)
         })
         return Disposable { /* should this be weak/unowned? */
@@ -307,6 +313,10 @@ public final class I<A>: AnyI, Node {
         var newValue = value!
         transform(&newValue)
         write(newValue)
+    }
+    
+    deinit {
+        print("dealloc")
     }
 }
 

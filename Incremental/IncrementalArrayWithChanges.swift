@@ -82,7 +82,11 @@ extension I {
         current(value.latest)
         var changes = value.changes
         return observe { arr in
+            print("_observerFire3")
+            print("_value.changes: \(self.value.latest), \(self.value.changes)")
+            print("_handleChange: \(arr.latest), \(arr.changes)")
             for change in arr.changes[changes.count...] {
+                print("_handleChange: \(change)")
                 handleChange(change)
             }
             changes = arr.changes
