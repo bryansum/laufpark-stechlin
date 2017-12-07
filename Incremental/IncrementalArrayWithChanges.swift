@@ -17,6 +17,14 @@ public struct ArrayWithChanges<A: Equatable>: Equatable, CustomDebugStringConver
         latest = value
     }
 
+    public init(_ initial: [A] = [], _ changes: [ArrayChange<A>]) {
+        self.initial = initial
+        self.changes = changes
+        latest = changes.reduce(into: initial) { (r, change) in
+            r.apply(change)
+        }
+    }
+
     public static func == (lhs: ArrayWithChanges<A>, rhs: ArrayWithChanges<A>) -> Bool {
         return lhs.latest == rhs.latest
     }
@@ -51,7 +59,19 @@ extension I {
     public func map<B, C>(eq: @escaping (ArrayWithChanges<C>, ArrayWithChanges<C>) -> Bool, _ transform: @escaping (B) -> C) -> I<ArrayWithChanges<C>> where A == ArrayWithChanges<B> {
         let result = I<ArrayWithChanges<C>>(eq: eq)
         let reader = MapReader(source: self, transform: { arr in
-            ArrayWithChanges(arr.latest.map(transform))
+            ArrayWithChanges(arr.initial.map(transform),
+                             arr.changes.map { change in
+                                switch change {
+                                case let .insert(el, at: i):
+                                    return .insert(transform(el), at: i)
+                                case let .remove(at: i):
+                                    return .remove(at: i)
+                                case let .replace(with: el, at: i):
+                                    return .replace(with: transform(el), at: i)
+                                case let .move(at: i, to: j):
+                                    return .move(at: i, to: j)
+                                }
+            })
         }, target: result)
         result.strongReferences.add(addReader(reader))
         return result
