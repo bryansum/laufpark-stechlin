@@ -310,6 +310,18 @@ public final class I<A>: AnyI, Node {
     }
 }
 
+extension Input {
+    public func dependsOn<B: Equatable>(_ other: I<B>) -> I<A> {
+        let result = I<B>(eq: other.eq)
+        let reader = FlatMapReader(source: other, transform: { _ in
+            self.write(self.i.value)
+            return other
+        }, target: result)
+        result.strongReferences.add(other.addReader(reader))
+        return result
+    }
+}
+
 extension I {
     public func flatMap<B: Equatable>(_ transform: @escaping (A) -> I<B>) -> I<B> {
         return flatMap(eq: ==, transform)
