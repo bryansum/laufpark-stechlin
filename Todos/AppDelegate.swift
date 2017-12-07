@@ -81,8 +81,8 @@ func render(state: I<State>, send: @escaping (State.Message) -> ()) -> IBox<UIVi
     e.setRightBarButtonItems([add()])
 
     let vc = if_(state[\.todos].map { $0.isEmpty }, then: e, else: tableVC)
-    
-    let navigationVC = navigationController(flatten([vc]))
+    let array: I<ArrayWithChanges<IBox<UIViewController>>> = flatten([vc])
+    let navigationVC = navigationController(array)
     return navigationVC.map { $0 }
 }
 

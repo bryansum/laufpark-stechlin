@@ -69,6 +69,15 @@ public struct ArrayWithChanges<A: Equatable>: Equatable, CustomDebugStringConver
     }
 }
 
+public func flatten<A>(_ array: [I<A>]) -> I<ArrayWithChanges<A>> {
+    return flatten(eq: ==, array)
+}
+
+public func flatten<A>(eq: @escaping (ArrayWithChanges<A>, ArrayWithChanges<A>) -> Bool, _ array: [I<A>]) -> I<ArrayWithChanges<A>> {
+    let initial = array.flatMap { $0.value }
+    return I<ArrayWithChanges<A>>(eq: eq, value: ArrayWithChanges(initial))
+}
+
 extension I {
     public func map<B, C>(_ transform: @escaping (B) -> C) -> I<ArrayWithChanges<C>> where A == ArrayWithChanges<B> {
         return map(eq: ==, transform)
