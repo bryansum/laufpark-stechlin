@@ -215,7 +215,7 @@ extension Array where Element: Equatable {
     }
 }
 
-public struct ArrayWithHistory<A: Equatable>: Equatable {
+public final class ArrayWithHistory<A: Equatable>: Equatable {
     public let initial: [A]
     public let changes: I<IList<ArrayChange<A>>> // todo: this should be write-only
     public init(_ initial: [A]) {
@@ -228,18 +228,18 @@ public struct ArrayWithHistory<A: Equatable>: Equatable {
     }
 
     public static func ==(lhs: ArrayWithHistory<A>, rhs: ArrayWithHistory<A>) -> Bool {
-        return lhs.latest == rhs.latest
+        return lhs === rhs
     }
 }
 
 extension ArrayWithHistory { // mutation. we could either track this with a phantom type, or only allow changes on creation... not sure yet.
     
-    public mutating func change(_ change: ArrayChange<A>) {
+    public func change(_ change: ArrayChange<A>) {
         appendOnly(change, to: changes)
     }
     
     // todo not so sure if this is a great idea! we should only expose append/change when creating an array anyway.
-    public mutating func append(_ value: A) {
+    public func append(_ value: A) {
         let index = self.unsafeLatestSnapshot.count
         self.change(.insert(value, at: index))
     }
@@ -250,7 +250,7 @@ extension ArrayWithHistory { // mutation. we could either track this with a phan
     }
     
     // todo not sure if this is the best idea
-    public mutating func remove(where condition: (A) -> Bool) {
+    public func remove(where condition: (A) -> Bool) {
         let reversed = self.unsafeLatestSnapshot.enumerated().reversed()
         for (index, item) in reversed {
             if condition(item) {
@@ -259,7 +259,7 @@ extension ArrayWithHistory { // mutation. we could either track this with a phan
         }
     }
     
-    public mutating func mutate(at index: Int, transform: (inout A) -> ()) {
+    public func mutate(at index: Int, transform: (inout A) -> ()) {
         var value = unsafeLatestSnapshot[index]
         transform(&value)
         if unsafeLatestSnapshot[index] != value {
