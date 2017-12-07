@@ -80,6 +80,18 @@ public func tableViewController<A>(items value: ArrayWithHistory<A>, didSelect: 
     return box
 }
 
+public func tableViewController<A>(items: I<ArrayWithChanges<A>>, didSelect: ((A) -> ())? = nil, didDelete: ((A) -> ())? = nil, configure: @escaping (UITableViewCell, A) -> ()) -> IBox<UITableViewController> {
+    let tableVC = TableVC([], didSelect: didSelect, didDelete: didDelete, configure: configure)
+    let box = IBox<UITableViewController>(tableVC)
+    box.disposables.append(items.observe(current: {
+        tableVC.items = $0
+        tableVC.tableView.reloadData()
+    }, handleChange: { change in
+        tableVC.apply(change)
+    }))
+    return box
+}
+
 public func tableViewController<A>(items: I<ArrayWithHistory<A>>, didSelect: ((A) -> ())? = nil, didDelete: ((A) -> ())? = nil, configure: @escaping (UITableViewCell, A) -> ()) -> IBox<UITableViewController> {
     let tableVC = TableVC([], didSelect: didSelect, didDelete: didDelete, configure: configure)
     let box = IBox<UITableViewController>(tableVC)
