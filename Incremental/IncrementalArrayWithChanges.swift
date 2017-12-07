@@ -44,6 +44,19 @@ public struct ArrayWithChanges<A: Equatable>: Equatable, CustomDebugStringConver
 }
 
 extension I {
+    public func map<B, C>(_ transform: @escaping (B) -> C) -> I<ArrayWithChanges<C>> where A == ArrayWithChanges<B> {
+        return map(eq: ==, transform)
+    }
+
+    public func map<B, C>(eq: @escaping (ArrayWithChanges<C>, ArrayWithChanges<C>) -> Bool, _ transform: @escaping (B) -> C) -> I<ArrayWithChanges<C>> where A == ArrayWithChanges<B> {
+        let result = I<ArrayWithChanges<C>>(eq: eq)
+        let reader = MapReader(source: self, transform: { arr in
+            ArrayWithChanges(arr.latest.map(transform))
+        }, target: result)
+        result.strongReferences.add(addReader(reader))
+        return result
+    }
+
     public func observe<B>(current: ([B]) -> (), handleChange: @escaping (ArrayChange<B>) -> ()) -> Disposable where A == ArrayWithChanges<B> {
         precondition(value != nil, "Must have an initial value")
         current(value.latest)
