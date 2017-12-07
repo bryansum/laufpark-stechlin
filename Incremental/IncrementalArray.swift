@@ -232,6 +232,12 @@ public final class ArrayWithHistory<A: Equatable>: Equatable {
     }
 }
 
+extension ArrayWithHistory: ExpressibleByArrayLiteral {
+    public convenience init(arrayLiteral elements: A...) {
+        self.init(elements)
+    }
+}
+
 extension ArrayWithHistory { // mutation. we could either track this with a phantom type, or only allow changes on creation... not sure yet.
     
     public func change(_ change: ArrayChange<A>) {
