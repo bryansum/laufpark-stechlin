@@ -202,9 +202,9 @@ extension Track {
         }
         
         // todo check segments?
-        if let sourceIndex = coordinates.index(where: { $0.coordinate == between }) {
+      if coordinates.index(where: { $0.coordinate == between }) != nil {
             return ([], between.clLocationCoordinate.squaredDistanceApproximation(to: destination.clLocationCoordinate).squareRoot())
-        } else if let destinationIndex = coordinates.index(where: { $0.coordinate == destination }) {
+        } else if coordinates.index(where: { $0.coordinate == destination }) != nil {
             return ([], between.clLocationCoordinate.squaredDistanceApproximation(to: destination.clLocationCoordinate).squareRoot())
         }
         
@@ -432,7 +432,7 @@ func buildGraph(tracks: [Track], url: URL, progress: @escaping (Float) -> ()) ->
         let neighbors = tracks.filter { $0.name != t.name && boundingBox.intersects(boundingBoxes[$0.name]!) }
         
         let joinedPoints: [(TrackPoint, overlaps: [(Box<Track>, Segment)])] = kdPoints.map { p in
-            let pointNeighbors = neighbors.flatMap { neighbor in
+          let pointNeighbors = neighbors.compactMap { neighbor in
                 neighbor.segment(closeTo: p.point.coordinate, maxDistance: maxDistance).map { (Box(neighbor), $0) }
             }
             return (p, pointNeighbors)
